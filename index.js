@@ -25,15 +25,43 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-
+    const database = client.db('house-hunter')
+    const userCollection = database.collection('userCollection')
 
     app.get('/', (req, res) => {
-        res.send('create server')
-      })
+      res.send('create server')
+    })
+
+  app.post('/saveInfo',async(req, res) => {
+    const info = req.body
+    console.log(info)
+    const query = {email:info.email}
+    const user = await userCollection.findOne(query)
+    if(user){
+      return res.send('email allready used')
+    }else{
+      const result = await userCollection.insertOne(info);
+      res.send(result)
+    }
+  })
+
+  app.get('/getUser', async(req, res) => {
+    const {email, password} = req.query
+    const query = {email:email}
+    const user = await userCollection.findOne(query);
+    if(user?.email !== email){
+      return res.send({message:'worng email'})
+    }else if(user?.password !== password){
+      return res.send({message:'worng password'})
+    }else{
+      res.send(user)
+    }
+  })
 
 
+
+    // Connect the client to the server	(optional starting in v4.7)
+    // await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
